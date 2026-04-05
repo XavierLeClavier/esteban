@@ -1,15 +1,15 @@
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export default function ChatHeader() {
   const router = useRouter();
 
   const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
     router.replace("/");
+  };
+
+  const handleSettings = () => {
+    router.push("/settings");
   };
 
   return (
@@ -22,11 +22,12 @@ export default function ChatHeader() {
           <Text className="text-xs font-semibold text-slate-100">Back</Text>
         </TouchableOpacity>
 
-        <Link href="/settings" asChild>
-          <TouchableOpacity className="rounded-lg border border-cyan-600 bg-cyan-500/20 px-3 py-2">
-            <Text className="text-xs font-semibold text-cyan-200">Settings</Text>
-          </TouchableOpacity>
-        </Link>
+        <TouchableOpacity
+          className="rounded-lg border border-cyan-600 bg-cyan-500/20 px-3 py-2"
+          onPress={handleSettings}
+        >
+          <Text className="text-xs font-semibold text-cyan-200">Settings</Text>
+        </TouchableOpacity>
       </View>
 
       <Text className="mt-3 text-xs tracking-[2px] text-cyan-400">SELF-HOSTED LLM</Text>

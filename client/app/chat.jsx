@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   KeyboardAvoidingView,
   Linking,
@@ -67,7 +68,7 @@ const Chat = () => {
   const voiceAssistantMessageIdRef = useRef(null);
   const scrollRef = useRef(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const { enabledAppKeys, enabledAppConfigsByKey } = useOpenableApps();
+  const { enabledAppKeys, enabledAppConfigsByKey, reloadAppSettings } = useOpenableApps();
 
   const wsUrl = useMemo(() => getRealtimeVoiceWebSocketUrl(), []);
 
@@ -89,14 +90,23 @@ const Chat = () => {
       if (chunkIntervalRef.current) {
         clearInterval(chunkIntervalRef.current);
       }
-      if (recorder?.isRecording) {
-        recorder.stop().catch(() => {});
+      try {
+        recorder?.stop?.().catch(() => {});
+      } catch {
+        // Ignore teardown race where the native recorder has already been released.
       }
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
   }, [recorder]);
+
+  useFocusEffect(
+    useCallback(() => {
+      reloadAppSettings();
+      return undefined;
+    }, [reloadAppSettings])
+  );
 
   const handleComposerFocus = useCallback(() => {
     requestAnimationFrame(() => {

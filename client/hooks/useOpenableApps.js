@@ -3,34 +3,121 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OPENABLE_APPS_CATALOG, getDefaultAppToggles } from "../config/openableApps";
 
 const STORAGE_KEY = "esteban.openableApps.v1";
+let inMemoryRawCache = null;
+
+function readFromLocalStorage() {
+  if (typeof globalThis === "undefined" || !globalThis.localStorage) {
+    return null;
+  }
+
+  try {
+    return globalThis.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeToLocalStorage(value) {
+  if (typeof globalThis === "undefined" || !globalThis.localStorage) {
+    return false;
+  }
+
+  try {
+    globalThis.localStorage.setItem(STORAGE_KEY, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readStoredTogglesRaw() {
+  if (typeof inMemoryRawCache === "string") {
+    return inMemoryRawCache;
+  }
+
+  try {
+    if (AsyncStorage?.getItem) {
+      const value = await AsyncStorage.getItem(STORAGE_KEY);
+      if (typeof value === "string") {
+        inMemoryRawCache = value;
+      }
+      return value;
+    }
+  } catch {
+    // Fall back to localStorage below.
+  }
+
+  const local = readFromLocalStorage();
+  if (typeof local === "string") {
+    inMemoryRawCache = local;
+  }
+  return local;
+}
+
+async function writeStoredTogglesRaw(value) {
+  inMemoryRawCache = value;
+
+  let wrote = false;
+
+  try {
+    if (AsyncStorage?.setItem) {
+      await AsyncStorage.setItem(STORAGE_KEY, value);
+      wrote = true;
+    }
+  } catch {
+    // Fall back to localStorage below if native write failed.
+  }
+
+  if (writeToLocalStorage(value)) {
+    wrote = true;
+  }
+
+  // If persistent backends are unavailable, keep memory cache as a usable fallback.
+  return wrote || typeof inMemoryRawCache === "string";
+}
+
+function normalizeToggles(raw) {
+  const defaults = getDefaultAppToggles();
+  if (!raw) {
+    return defaults;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return defaults;
+    }
+
+    const next = { ...defaults };
+    Object.keys(defaults).forEach((key) => {
+      if (typeof parsed[key] === "boolean") {
+        next[key] = parsed[key];
+      }
+    });
+    return next;
+  } catch {
+    return defaults;
+  }
+}
 
 export default function useOpenableApps() {
   const [toggles, setToggles] = useState(getDefaultAppToggles);
   const [loaded, setLoaded] = useState(false);
+
+  const reloadAppSettings = useCallback(async () => {
+    const raw = await readStoredTogglesRaw();
+    const next = normalizeToggles(raw);
+    setToggles(next);
+    return next;
+  }, []);
 
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          return;
-        }
-
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed !== "object") {
-          return;
-        }
-
-        const defaults = getDefaultAppToggles();
-        const next = { ...defaults };
-
-        Object.keys(defaults).forEach((key) => {
-          if (typeof parsed[key] === "boolean") {
-            next[key] = parsed[key];
-          }
-        });
+        const raw = await readStoredTogglesRaw();
+        const next = normalizeToggles(raw);
 
         if (mounted) {
           setToggles(next);
@@ -51,13 +138,9 @@ export default function useOpenableApps() {
     };
   }, []);
 
-  const saveToggles = useCallback(async (next) => {
+  const saveAppSettings = useCallback(async (next) => {
     setToggles(next);
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Keep runtime state even if persistence fails.
-    }
+    return writeStoredTogglesRaw(JSON.stringify(next));
   }, []);
 
   const setAppEnabled = useCallback(
@@ -65,10 +148,9 @@ export default function useOpenableApps() {
       if (!(appKey in OPENABLE_APPS_CATALOG)) {
         return;
       }
-      const next = { ...toggles, [appKey]: Boolean(enabled) };
-      saveToggles(next);
+      setToggles((prev) => ({ ...prev, [appKey]: Boolean(enabled) }));
     },
-    [saveToggles, toggles]
+    []
   );
 
   const appEntries = useMemo(
@@ -99,6 +181,8 @@ export default function useOpenableApps() {
     enabledAppKeys,
     enabledAppConfigsByKey,
     setAppEnabled,
+    saveAppSettings,
+    reloadAppSettings,
     loaded,
   };
 }
