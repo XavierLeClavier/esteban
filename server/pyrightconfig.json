@@ -1,0 +1,6 @@
+{
+	"include": ["main.py", "src"],
+	"extraPaths": ["src"],
+	"venvPath": ".",
+	"venv": ".venv"
+}
