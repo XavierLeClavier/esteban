@@ -2,8 +2,8 @@ import base64
 import json
 from typing import Optional
 
-from ..services.chat_service import ChatService
-from ..services.stt_service import STTService
+from .chat_service import ChatService
+from .stt_service import STTService
 
 
 class VoiceWebSocketService:

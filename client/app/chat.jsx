@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   Text,
@@ -17,7 +18,31 @@ import ChatComposer from "../components/chat/ChatComposer";
 import ChatHeader from "../components/chat/ChatHeader";
 import MessageBubble from "../components/chat/MessageBubble";
 import TypingIndicator from "../components/chat/TypingIndicator";
-import { getRealtimeVoiceWebSocketUrl, streamChat } from "../services/api";
+import useOpenableApps from "../hooks/useOpenableApps";
+import { decideChatAction, getRealtimeVoiceWebSocketUrl, streamChat } from "../services/api";
+
+async function openAppByKey(appKey, appConfigsByKey) {
+  const appConfig = appConfigsByKey[appKey];
+  if (!appConfig) {
+    throw new Error("Unsupported app.");
+  }
+
+  for (const appUrl of appConfig.appUrls || []) {
+    try {
+      await Linking.openURL(appUrl);
+      return { opened: true, appName: appConfig.name };
+    } catch {
+      // Try the next deeplink variant.
+    }
+  }
+
+  if (appConfig.fallbackUrl) {
+    await Linking.openURL(appConfig.fallbackUrl);
+    return { opened: false, appName: appConfig.name };
+  }
+
+  throw new Error(`${appConfig.name} is not installed on this device.`);
+}
 
 const Chat = () => {
   const [question, setQuestion] = useState("");
@@ -42,6 +67,7 @@ const Chat = () => {
   const voiceAssistantMessageIdRef = useRef(null);
   const scrollRef = useRef(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const { enabledAppKeys, enabledAppConfigsByKey } = useOpenableApps();
 
   const wsUrl = useMemo(() => getRealtimeVoiceWebSocketUrl(), []);
 
@@ -71,6 +97,12 @@ const Chat = () => {
       }
     };
   }, [recorder]);
+
+  const handleComposerFocus = useCallback(() => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+  }, []);
 
   const setVoiceActiveState = useCallback((value) => {
     isVoiceActiveRef.current = value;
@@ -322,7 +354,6 @@ const Chat = () => {
       role: "user",
       content: trimmed,
     };
-    const assistantMessageId = `assistant-${Date.now()}`;
     const historyPayload = messages
       .filter((item) => item.content.trim())
       .map((item) => ({ role: item.role, content: item.content }));
@@ -330,29 +361,75 @@ const Chat = () => {
     setQuestion("");
     setError("");
     setLoading(true);
-    setMessages((prev) => [...prev, userMessage, { id: assistantMessageId, role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, userMessage]);
 
-    xhrRef.current = streamChat({
+    const startStreamingReply = () => {
+      const assistantMessageId = `assistant-${Date.now()}`;
+      setMessages((prev) => [...prev, { id: assistantMessageId, role: "assistant", content: "" }]);
+
+      xhrRef.current = streamChat({
+        question: trimmed,
+        context: requestContext,
+        history: historyPayload,
+        allowedApps: enabledAppKeys,
+        onChunk: (nextChunk) => {
+          setMessages((prev) =>
+            prev.map((item) =>
+              item.id === assistantMessageId
+                ? { ...item, content: `${item.content}${nextChunk}` }
+                : item
+            )
+          );
+        },
+        onError: (message) => {
+          setLoading(false);
+          setError(message);
+        },
+        onDone: () => {
+          setLoading(false);
+        },
+      });
+    };
+
+    decideChatAction({
       question: trimmed,
       context: requestContext,
       history: historyPayload,
-      onChunk: (nextChunk) => {
-        setMessages((prev) =>
-          prev.map((item) =>
-            item.id === assistantMessageId
-              ? { ...item, content: `${item.content}${nextChunk}` }
-              : item
-          )
-        );
-      },
-      onError: (message) => {
-        setLoading(false);
-        setError(message);
-      },
-      onDone: () => {
-        setLoading(false);
-      },
-    });
+      allowedApps: enabledAppKeys,
+    })
+      .then((decision) => {
+        const shouldOpen =
+          decision?.action === "open_app" && decision?.app && enabledAppConfigsByKey[decision.app];
+        if (!shouldOpen) {
+          startStreamingReply();
+          return;
+        }
+
+        openAppByKey(decision.app, enabledAppConfigsByKey)
+          .then(({ opened, appName }) => {
+            const assistantMessage = {
+              id: `assistant-${Date.now()}`,
+              role: "assistant",
+              content: opened
+                ? `Opening ${appName}.`
+                : `${appName} is not installed. I opened the web version instead.`,
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            setLoading(false);
+          })
+          .catch((err) => {
+            const assistantMessage = {
+              id: `assistant-${Date.now()}`,
+              role: "assistant",
+              content: `I could not open that app: ${err?.message || "unknown error"}`,
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            setLoading(false);
+          });
+      })
+      .catch(() => {
+        startStreamingReply();
+      });
   };
 
   const handlePrimaryAction = () => {
@@ -411,6 +488,7 @@ const Chat = () => {
         onChangeText={setQuestion}
         onSend={handlePrimaryAction}
         onVoiceToggle={handleVoiceToggle}
+        onInputFocus={handleComposerFocus}
         loading={loading}
         recording={isVoiceActive}
         transcribing={isVoiceFinalizing}

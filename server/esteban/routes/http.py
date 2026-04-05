@@ -40,6 +40,10 @@ def register_http_routes(app) -> None:
 	def chat_stream():
 		return chat_controller.chat_stream()
 
+	@app.post("/chat/action-decision")
+	def chat_action_decision():
+		return chat_controller.chat_action_decision()
+
 	@app.post("/voice/transcribe")
 	def voice_transcribe():
 		return voice_controller.voice_transcribe()

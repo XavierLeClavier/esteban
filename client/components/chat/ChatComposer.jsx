@@ -5,6 +5,7 @@ export default function ChatComposer({
   onChangeText,
   onSend,
   onVoiceToggle,
+  onInputFocus,
   loading,
   recording,
   transcribing,
@@ -26,6 +27,7 @@ export default function ChatComposer({
           placeholderTextColor="#64748B"
           value={value}
           onChangeText={onChangeText}
+          onFocus={onInputFocus}
           multiline
           textAlignVertical="top"
           editable={!transcribing}

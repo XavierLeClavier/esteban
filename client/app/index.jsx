@@ -4,133 +4,53 @@ import { Link } from "expo-router";
 
 export default function Home() {
   return (
-    <ScrollView className="flex-1 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <View className="px-6 pt-12 pb-8">
-        <Text className="text-sm font-semibold tracking-widest text-blue-400">
-          SELF-HOSTED AI
-        </Text>
-        <Text className="mt-2 text-4xl font-bold text-white">Esteban</Text>
-        <Text className="mt-1 text-base text-slate-400">
-          Your personal AI, fully in your control
+    <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ paddingBottom: 30 }}>
+      <View className="px-6 pb-8 pt-14">
+        <Text className="text-xs font-semibold tracking-[3px] text-cyan-400">PRIVATE LOCAL ASSISTANT</Text>
+        <Text className="mt-3 text-5xl font-extrabold text-slate-100">Esteban</Text>
+        <Text className="mt-2 text-base leading-6 text-slate-300">
+          A self-hosted AI that can answer, transcribe, and open only the apps you allow.
         </Text>
       </View>
 
-      {/* Hero Section */}
-      <View className="mx-6 mb-8 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 p-6 shadow-lg">
-        <Text className="text-2xl font-bold text-white">
-          100% Private Intelligence
+      <View className="mx-6 mb-8 rounded-3xl border border-cyan-700/40 bg-slate-900 p-6">
+        <Text className="text-xl font-bold text-slate-100">Everything stays under your control</Text>
+        <Text className="mt-2 text-slate-300">
+          Local model. Local voice handling. Local app permissions.
         </Text>
-        <Text className="mt-3 text-base leading-6 text-blue-50">
-          No data leaves your device. Your conversations stay private. Your AI stays honest.
-        </Text>
-      </View>
 
-      {/* Process Steps */}
-      <View className="px-6 pb-6">
-        <Text className="mb-4 text-lg font-bold text-white">How It Works</Text>
+        <View className="mt-5 gap-3">
+          <Link href="/chat" asChild>
+            <TouchableOpacity className="rounded-2xl border-2 border-cyan-400 bg-cyan-400 px-5 py-4 active:opacity-90">
+              <Text className="text-center text-lg font-extrabold text-slate-950">Open Chat</Text>
+            </TouchableOpacity>
+          </Link>
 
-        {/* Step 1 */}
-        <View className="mb-4 flex-row items-start rounded-xl bg-slate-700 p-4">
-          <View className="mr-4 flex h-9 w-9 items-center justify-center rounded-full bg-blue-500">
-            <Text className="font-bold text-white">1</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-white">Local LLM</Text>
-            <Text className="mt-1 text-sm text-slate-300">
-              Llama 3.2 runs locally on your device, powered by Ollama
-            </Text>
-          </View>
-        </View>
-
-        {/* Step 2 */}
-        <View className="mb-4 flex-row items-start rounded-xl bg-slate-700 p-4">
-          <View className="mr-4 flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500">
-            <Text className="font-bold text-white">2</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-white">Smart API</Text>
-            <Text className="mt-1 text-sm text-slate-300">
-              Flask backend streams responses in real-time with token-by-token output
-            </Text>
-          </View>
-        </View>
-
-        {/* Step 3 */}
-        <View className="mb-4 flex-row items-start rounded-xl bg-slate-700 p-4">
-          <View className="mr-4 flex h-9 w-9 items-center justify-center rounded-full bg-purple-500">
-            <Text className="font-bold text-white">3</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-white">React Native Mobile</Text>
-            <Text className="mt-1 text-sm text-slate-300">
-              Beautiful, responsive UI powered by Expo and NativeWind
-            </Text>
-          </View>
-        </View>
-
-        {/* Step 4 */}
-        <View className="flex-row items-start rounded-xl bg-slate-700 p-4">
-          <View className="mr-4 flex h-9 w-9 items-center justify-center rounded-full bg-green-500">
-            <Text className="font-bold text-white">4</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-white">Talk to Your AI</Text>
-            <Text className="mt-1 text-sm text-slate-300">
-              Ask questions, get instant answers, evolve your assistant
-            </Text>
-          </View>
+          <Link href="/settings" asChild>
+            <TouchableOpacity className="rounded-2xl border-2 border-slate-500 bg-slate-800 px-5 py-4 active:opacity-90">
+              <Text className="text-center text-lg font-extrabold text-slate-100">App Access Settings</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       </View>
 
-      {/* Features Grid */}
-      <View className="px-6 pb-8">
-        <Text className="mb-4 text-lg font-bold text-white">Features</Text>
-        <View className="flex-row gap-3">
-          <View className="flex-1 rounded-lg bg-slate-700 p-3">
-            <Text className="text-xs uppercase tracking-wider text-blue-400">
-              🔒 Private
-            </Text>
-            <Text className="mt-1 text-sm font-medium text-white">
-              No tracking
-            </Text>
-          </View>
-          <View className="flex-1 rounded-lg bg-slate-700 p-3">
-            <Text className="text-xs uppercase tracking-wider text-cyan-400">
-              ⚡ Fast
-            </Text>
-            <Text className="mt-1 text-sm font-medium text-white">
-              Instant responses
-            </Text>
-          </View>
-          <View className="flex-1 rounded-lg bg-slate-700 p-3">
-            <Text className="text-xs uppercase tracking-wider text-purple-400">
-              🎯 Yours
-            </Text>
-            <Text className="mt-1 text-sm font-medium text-white">
-              You control it
-            </Text>
-          </View>
+      <View className="px-6">
+        <Text className="mb-3 text-lg font-bold text-slate-100">Quick Overview</Text>
+
+        <View className="mb-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <Text className="font-semibold text-cyan-300">1. Local LLM</Text>
+          <Text className="mt-1 text-slate-300">Your model runs on your own infrastructure.</Text>
         </View>
-      </View>
 
-      {/* CTA Button */}
-      <View className="mx-6 pb-12">
-        <Link href="/chat" asChild>
-          <TouchableOpacity className="flex-row items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-8 py-4 shadow-xl active:opacity-90">
-            <Text className="mr-2 text-lg font-bold text-white">
-              Start Chatting
-            </Text>
-            <Text className="text-xl">→</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+        <View className="mb-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <Text className="font-semibold text-cyan-300">2. Realtime Voice</Text>
+          <Text className="mt-1 text-slate-300">Speak naturally and get instant streamed answers.</Text>
+        </View>
 
-      {/* Footer */}
-      <View className="border-t border-slate-700 px-6 py-6">
-        <Text className="text-center text-xs text-slate-500">
-          v1.0.0 • Fully self-hosted • Open source ethos
-        </Text>
+        <View className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <Text className="font-semibold text-cyan-300">3. App Permissions</Text>
+          <Text className="mt-1 text-slate-300">Only enabled apps can be opened by Esteban.</Text>
+        </View>
       </View>
     </ScrollView>
   );

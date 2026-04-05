@@ -13,7 +13,7 @@ export function getRealtimeVoiceWebSocketUrl() {
   return `${API_BASE_URL.replace("http://", "ws://")}/voice/realtime`;
 }
 
-export function streamChat({ question, context, history, onChunk, onError, onDone }) {
+export function streamChat({ question, context, history, allowedApps, onChunk, onError, onDone }) {
   const xhr = new XMLHttpRequest();
   let processedLength = 0;
 
@@ -50,10 +50,33 @@ export function streamChat({ question, context, history, onChunk, onError, onDon
       question,
       context,
       history,
+      allowed_apps: allowedApps,
     })
   );
 
   return xhr;
+}
+
+export async function decideChatAction({ question, context, history, allowedApps }) {
+  const response = await fetch(`${API_BASE_URL}/chat/action-decision`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      question,
+      context,
+      history,
+      allowed_apps: allowedApps,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || `Action decision failed (${response.status})`);
+  }
+
+  return data;
 }
 
 export async function transcribeAudio({ uri, mimeType = "audio/m4a", language = "en" }) {
